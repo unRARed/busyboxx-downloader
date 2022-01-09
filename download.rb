@@ -17,10 +17,21 @@ require 'byebug'
 ##                                                                        ##
 #############################################################################
 
-LIB_NUMBER = ARGV[0].to_i || nil
-FIRST_ITEM = ARGV[1].to_i || nil
+SOURCE =
+  case ARGV[0]
+  when 'animation'
+    'Animation-Boxx'
+  when 'busy'
+    'busyBoxx'
+  else
+    raise 'Must specify source (busy or animation).'
+  end
 
-BASE_URL = 'https://www.busyboxx.com'
+BASE_URL = "https://www.#{SOURCE}.com"
+
+LIB_NUMBER = ARGV[1].to_i || nil
+FIRST_ITEM = ARGV[2].to_i || nil
+
 Watir.default_timeout = 60
 prefs = {
   download: {
@@ -39,7 +50,9 @@ browser = Watir::Browser.new :chrome, options: { prefs: prefs }
 
 # Wait for login form
 puts 'Logging in'
-browser.goto('https://account.busyboxx.com/LogIn/')
+browser.goto(
+  "https://account.busyboxx.com/LogIn/#{SOURCE == 'busy' ? '' : SOURCE}"
+)
 sleep 5
 
 # Fill in the form
@@ -50,14 +63,14 @@ puts 'Submitting form'
 browser.button(name: 'SignInButton').click
 
 puts 'Waiting for homepage / download link'
-browser.window(title: "BusyBoxx : Home").wait_until(&:exists?)
+browser.window(title: "#{SOURCE} : Home").wait_until(&:exists?)
 
 # Download stuff
 puts 'Moving to /Downloads'
 browser.goto("#{BASE_URL}/Downloads")
 # Wait for libs to load
 puts 'Waiting for libs to load'
-browser.window(title: "BusyBoxx : Downloads").wait_until(&:exists?)
+browser.window(title: "#{SOURCE} : Downloads").wait_until(&:exists?)
 browser.div(class: 'contentsToDisplay').wait_until(&:exists?)
 
 library_links = browser.links(href: /Downloads\?path/)
